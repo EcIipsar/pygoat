@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pygoat
+  namespace: pygoat-test   # keep or change to desired namespace
+  labels:
+    app: pygoat
+    component: application
+    version: v2025.10
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: pygoat
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: pygoat
+        component: application
+        version: v2025.10
+      annotations:
+        # If you have Prometheus scrape annotations, add them here.
+        # prometheus.io/path: /actuator/prometheus
+        # prometheus.io/port: "9090"
+        # prometheus.io/scrape: "true"
+    spec:
+      containers:
+      - name: pygoat
+        image: 216989116096.dkr.ecr.ap-southeast-2.amazonaws.com/wiz-poc-pygoat:pygoat
+        imagePullPolicy: IfNotPresent
+        # Optional: environment loaded from a ConfigMap (made optional so pod still starts if missing)
+        # Explicit env examples (safe defaults). These are optional; pygoat currently does not
+        # read env vars for SECRET_KEY or DB unless you modify settings.py to use them.
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          value: "pygoat.settings"
+        ports:
+        - name: http
+          containerPort: 8000      # Dockerfile runs gunicorn on :8000
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+        # Probes pointing to root / on port 8000 (adjust if your app exposes /healthz or /ready)
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 20
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 60
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      terminationGracePeriodSeconds: 30
