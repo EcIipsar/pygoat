@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pygoat
+  name: pygoat2
   namespace: pygoat-test   # keep or change to desired namespace
   labels:
     app: pygoat
