@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
       - name: pygoat
-        image: 216989116096.dkr.ecr.ap-southeast-2.amazonaws.com/wiz-poc-pygoat:pygoat
+        image: 216989116096.dkr.ecr.ap-southeast-2.amazonaws.com/wiz-poc-pygoat:pygoatv2
         imagePullPolicy: IfNotPresent
         # Optional: environment loaded from a ConfigMap (made optional so pod still starts if missing)
         # Explicit env examples (safe defaults). These are optional; pygoat currently does not
